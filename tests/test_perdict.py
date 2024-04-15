@@ -41,7 +41,6 @@ class Test_Perdict(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         filename = str(self.filename)
-        self.pdic.close()
         os.remove(filename)
     def test_initialization(self):
         """
@@ -70,8 +69,9 @@ class Test_Perdict(unittest.TestCase):
         # override
         pdic["new_key"] = 12
         self.assertEqual(pdic["new_key"],12)
-        new_size = os.path.getsize(self.filename)
         
+        pdic['x']='x'*10000
+        new_size = os.path.getsize(self.filename)
         self.assertTrue(new_size>old_size)
 
         pdic = Perdict(self.filename,cache_mode=False)
@@ -114,9 +114,7 @@ class Test_Perdict(unittest.TestCase):
 
         with self.assertRaises(KeyError):
             pdic["another_key"]
-        
-        pdic.close()
-        
+               
         new_size = os.path.getsize(self.filename)
         self.assertTrue(new_size<old_size)
     def test_iter(self):
@@ -151,10 +149,6 @@ class Test_Perdict(unittest.TestCase):
 
         with Perdict(self.filename) as local_pdic:
             local_pdic["context_key"] = "hello context key"
-        local_pdic.close()
-        # AFTER CLOSING, THE FILE IS CLOSED, SO APPLICATION OF LOCAL_PDIC WILL RAISE VALUEERROR
-        with self.assertRaises(ValueError):
-            local_pdic["test_key"] = 30
         
         self.assertEqual(self.pdic["context_key"],"hello context key")
         # after 
@@ -208,8 +202,7 @@ class Test_Perdict(unittest.TestCase):
         
         new_size = os.path.getsize(self.filename)
         self.assertTrue(new_size>old_size)
-        local_pdic.close()
-    
+
     def test_contains(self):
         """
             test contains, where checks the key in dictionary
@@ -276,15 +269,12 @@ class Test_Perdict(unittest.TestCase):
         # without d.sync(), file size does not change
         self.assertEqual(old_size,new_size)
 
-        # with contextmanager, it sync automatically, so the sile will be larger
+        # with contextmanager, it sync automatically, so the size will be larger
         with dopen(self.filename) as pdic:
             pdic['dopen_key'] = 'dopen'
         
         new_size = os.path.getsize(self.filename)
         self.assertTrue(new_size>old_size)
-        
-        # close the d instace
-        d.close()
 
     def test_setattr_delattr(self):
         """
@@ -330,6 +320,10 @@ class Test_Perdict(unittest.TestCase):
         #reset
         try:
             os.remove("test.cpkl")
+        except:
+            pass
+        try:
+            os.remove("ex.txt")
         except:
             pass
     

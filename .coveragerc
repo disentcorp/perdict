@@ -1,0 +1,5 @@
+[run]
+source = perdict
+command_line = -m tests.test_suite
+omit = tests/*, tests/test_files/*
+; branch = false

@@ -166,7 +166,6 @@ class Perdict:
 			# If the attribute already exists, set its value
 			self.__dict__[key] = value
 				
-			
 		else:
 			# If the attribute doesn't exist, call the superclass method
 			super().__setattr__(key, value)
@@ -205,21 +204,11 @@ class Perdict:
 	
 if __name__=='__main__':  # pragma:no cover
 
-	class Temp:
-		def __init__(self):
-			self.x = open('ex.txt','w')
-
-	
-	filename = 'test2.cpkl'
-
-	local_pdic = Perdict(filename,cache_mode=False)
-	local_pdic.cache = {'x':"x_val"}
-	local_pdic.sync()
-	local_pdic.cache = 'cahnged'
-	# local_pdic.x = 'x_val'
-	# local_pdic.sync()
-	# local_pdic.x = 'changed'
 	import os
+
+	filename = 'test2.cpkl'
+	local_pdic = Perdict(filename,cache_mode=False)
+
 	os.remove(filename)
 	
 	
