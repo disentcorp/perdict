@@ -3,19 +3,18 @@ import warnings
 import cloudpickle
 import perdict.utils as utils
 
-FOLDER = pathlib.Path.home() / pathlib.Path(".pkg_name")
+FILE = 'globals.cpkl'
+FOLDER = pathlib.Path.home() / pathlib.Path(".perdict")
 
 if not FOLDER.exists():
 	FOLDER.mkdir()
-
-DFLT_PATH = FOLDER / pathlib.Path("globals.ext")
 
 class Perdict:
 	"""
 		Initialized with a dictionary-like object
 	"""
 
-	def __init__(self,filename=DFLT_PATH,cache_mode=True):
+	def __init__(self,filename=FOLDER/FILE,cache_mode=True):
 		self.filename = pathlib.Path(filename)
 		self.cache = {}
 		self.cache_mode = cache_mode

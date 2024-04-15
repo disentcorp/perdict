@@ -9,7 +9,6 @@ import cloudpickle
 
 from perdict.perdict import Perdict,FOLDER
 
-
 TEST_FILE = lambda: "tests/test_files/test_file.cpkl"
 
 def dopen(filename, cache_mode=True):
@@ -38,6 +37,7 @@ class Test_Perdict(unittest.TestCase):
             pass
         cls.pdic_default = Perdict()
         cls.pdic.save()
+        
     @classmethod
     def tearDownClass(self):
         filename = str(self.filename)
