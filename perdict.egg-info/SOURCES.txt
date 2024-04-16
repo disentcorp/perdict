@@ -1,0 +1,13 @@
+LICENSE
+README.md
+setup.py
+perdict/__init__.py
+perdict/perdict.py
+perdict/utils.py
+perdict.egg-info/PKG-INFO
+perdict.egg-info/SOURCES.txt
+perdict.egg-info/dependency_links.txt
+perdict.egg-info/not-zip-safe
+perdict.egg-info/top_level.txt
+tests/test_perdict.py
+tests/test_suite.py
