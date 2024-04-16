@@ -2,6 +2,7 @@ import pathlib
 import warnings
 import cloudpickle
 import perdict.utils as utils
+import code
 
 FILE = 'globals.cpkl'
 FOLDER = pathlib.Path.home() / pathlib.Path(".perdict")
@@ -16,35 +17,23 @@ class Perdict:
 
 	def __init__(self,filename=FOLDER/FILE,cache_mode=True):
 		self.filename = pathlib.Path(filename)
-		self.cache = {}
 		self.cache_mode = cache_mode
-		
-		self.update()
-		
-	def update(self):
-		"""
-			when Perdict does not have dict attribute, it will load the file and assign dic
-		"""
-		if not hasattr(self,"dic"):
+		if self.cache_mode:
 			self.dic = self.load()
 
+	def update(self):
+		if not hasattr(self,"dic"):
+			self.dic = self.load()
 	def __getitem__(self,key):
 		"""
-			first try to get it from self.cache
+			get value from disk
 		"""
 
 		key = utils.space_to_under(key)
-		try:
-			value = self.cache[key]
-			# print(f'get from cached-----{key}')
-		except KeyError:
-			self.dic = self.load()
-			if key not in self.dic: 
-				raise KeyError(f"Key {key} not in perdict")
-			value = self.dic[key]
-			if self.cache_mode:
-				self.cache[key] = value
-			# print(f'get from disk-------')
+		self.update()
+		if key not in self.dic: 
+			raise KeyError(f"Key {key} not in perdict")
+		value = self.dic[key]
 		
 		return value
 	
@@ -54,15 +43,13 @@ class Perdict:
 		"""
 
 		key = utils.space_to_under(key)
-		if self.cache_mode:
-			self.cache[key] = value
-		
-		else:
-			if key in self.dic:
-				warnings.warn(f"Overriding key {key} with a new value")
-			self.dic[key] = value
+		self.update()
+
+		if key in self.dic:
+			warnings.warn(f"Overriding key {key} with a new value")
+		self.dic[key] = value
+		self.save()
 			
-	
 	def __delitem__(self,key):
 		"""
 			delete value by its key
@@ -73,10 +60,7 @@ class Perdict:
 			del self.dic[key]
 		except (AttributeError,KeyError):
 			pass
-		try:
-			del self.cache[key]
-		except KeyError:
-			pass
+
 		self.save()
 
 	def __iter__(self):
@@ -84,6 +68,7 @@ class Perdict:
 			yield next value
 		"""
 
+		self.update()
 		for k in self.dic.keys():
 			yield k
 	
@@ -92,26 +77,22 @@ class Perdict:
 			length of the dictionary
 		"""
 		
+		self.update()
 		return len(self.dic)
 	
 	def __enter__(self):
 		"""
 			entering in context manager
 		"""
+
+		self.update()
 		return self
 
 	def __exit__(self,*args):
 		"""
 			Should close the file when exit
 		"""
-		self.sync()
 
-	def sync(self):
-		"""
-			sync the cache with dictionary and save
-		"""
-		self.dic.update(self.cache)
-		self.cache = {}
 		self.save()
 
 	def load(self):
@@ -125,9 +106,12 @@ class Perdict:
 		f = open(self.filename, "rb")
 		try:
 			d = cloudpickle.load(f)
+		except EOFError:
+			warnings.warn("[Loading Failed] The file might be corrupted, set dict to an empty dict")
+			d = {}
 		finally:
 			f.close()
-		# print("loading perdict...")
+	
 		return d
 
 	def save(self):
@@ -140,9 +124,9 @@ class Perdict:
 		try:
 			cloudpickle.dump(self.dic, f)
 		except Exception:
-			f.close()
 			raise ValueError("Can not save the dictionary because of its values")
-		f.close()
+		finally:
+			f.close()
 		
 	def __contains__(self,key):
 		"""
@@ -150,7 +134,8 @@ class Perdict:
 		"""
 		
 		key = utils.space_to_under(key)
-		true_false = key in self.dic or key in self.cache
+		self.update()
+		true_false = key in self.dic
 		return true_false
 	
 
@@ -160,14 +145,23 @@ class Perdict:
 			However, string of test should not be equal with <Closed Dictionary> which 
 			comes from shelf instance
 		"""
-
+		
 		if key in self.__dict__:
 			# If the attribute already exists, set its value
 			self.__dict__[key] = value
+			self.update()
+			self.dic[key] = value
+			self.save()
+			print('in setattr')
+			code.interact(local=dict(globals(),**locals()))
 				
 		else:
 			# If the attribute doesn't exist, call the superclass method
+			print('in setattr0')
+			code.interact(local=dict(globals(),**locals()))
 			super().__setattr__(key, value)
+
+		
 	
 	def __repr__(self) -> str:
 		"""
@@ -207,7 +201,7 @@ if __name__=='__main__':  # pragma:no cover
 
 	filename = 'test2.cpkl'
 	local_pdic = Perdict(filename,cache_mode=False)
-
+	local_pdic.fail_obj = "hello"
 	os.remove(filename)
 	
 	
