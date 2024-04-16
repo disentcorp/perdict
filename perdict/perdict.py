@@ -214,12 +214,3 @@ class Perdict:
         return str(self.dic)
 
 
-if __name__ == "__main__":  # pragma:no cover
-
-    import os
-
-    filename = "test2.cpkl"
-    local_pdic = Perdict(filename, cache_mode=False)
-    local_pdic.fail_obj = "hello"
-    code.interact(local=dict(globals(), **locals()))
-    os.remove(filename)
