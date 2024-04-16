@@ -10,6 +10,12 @@ FOLDER = pathlib.Path.home() / pathlib.Path(".perdict")
 if not FOLDER.exists():
 	FOLDER.mkdir()
 
+LOCAL_ATRR = [
+	"filename",
+	"cache_mode",
+	"dic"
+]
+
 class Perdict:
 	"""
 		Initialized with a dictionary-like object
@@ -44,11 +50,9 @@ class Perdict:
 
 		key = utils.space_to_under(key)
 		self.update()
-
 		if key in self.dic:
 			warnings.warn(f"Overriding key {key} with a new value")
-		self.dic[key] = value
-		self.save()
+		self.sync(key,value)
 			
 	def __delitem__(self,key):
 		"""
@@ -56,6 +60,7 @@ class Perdict:
 		"""
 
 		key = utils.space_to_under(key)
+		self.update()
 		try:
 			del self.dic[key]
 		except (AttributeError,KeyError):
@@ -85,14 +90,13 @@ class Perdict:
 			entering in context manager
 		"""
 
-		self.update()
 		return self
 
 	def __exit__(self,*args):
 		"""
 			Should close the file when exit
 		"""
-
+		self.update()
 		self.save()
 
 	def load(self):
@@ -106,7 +110,7 @@ class Perdict:
 		f = open(self.filename, "rb")
 		try:
 			d = cloudpickle.load(f)
-		except EOFError:
+		except Exception:
 			warnings.warn("[Loading Failed] The file might be corrupted, set dict to an empty dict")
 			d = {}
 		finally:
@@ -138,27 +142,28 @@ class Perdict:
 		true_false = key in self.dic
 		return true_false
 	
+	def sync(self,key,value):
+		"""
+
+		"""
+		self.update()
+		self.dic[key] = value
+		self.save()
+
 
 	def __setattr__(self, key, value):
 		"""
-			when getitem fails, the key never saved on disk, so we can setitem
-			However, string of test should not be equal with <Closed Dictionary> which 
-			comes from shelf instance
+			if key not in LOCAL_ATTR, we save on disk
 		"""
-		
+
+		if key not in LOCAL_ATRR:
+			self.sync(key,value)
+
 		if key in self.__dict__:
 			# If the attribute already exists, set its value
 			self.__dict__[key] = value
-			self.update()
-			self.dic[key] = value
-			self.save()
-			print('in setattr')
-			code.interact(local=dict(globals(),**locals()))
-				
 		else:
 			# If the attribute doesn't exist, call the superclass method
-			print('in setattr0')
-			code.interact(local=dict(globals(),**locals()))
 			super().__setattr__(key, value)
 
 		
@@ -169,24 +174,43 @@ class Perdict:
 		"""
 		return self.__class__.__name__
 
-	def __eq__(self, value: object) -> bool:
+	def __eq__(self, other_dic: object) -> bool:
 		"""
-			not implemented yet
+			check equal with the other dictionary
 		"""
-		raise NotImplementedError
+		
+		
+		if not isinstance(other_dic,dict):
+			return False
+		
+		self.update()
+		return sorted(self.dic.items())==sorted(other_dic.items())
+
 	
 	def __hash__(self) -> int:
 		"""
-			not implemented yet
+			ensure that dictionaries with same content have same hash, 
+			even with the different order
 		
 		"""
-		raise NotImplementedError
+		self.update()
+		try:
+			result = hash(tuple(sorted(self.dic.items())))
+		except TypeError:
+			raise TypeError("unhashable object in the dictionary")
+		return result
 	
-	def __ne__(self, value: object) -> bool:
+	def __ne__(self, other_dic: object) -> bool:
 		"""
-			not implemented yet
+			check inequality with the other dictionary, 
 		"""
-		raise NotImplementedError
+		
+		if not isinstance(other_dic,dict):
+			return True
+		
+		self.update()
+		return sorted(self.dic.items())!=sorted(other_dic.items())
+
 	
 	def __str__(self) -> str:
 		"""
@@ -202,6 +226,7 @@ if __name__=='__main__':  # pragma:no cover
 	filename = 'test2.cpkl'
 	local_pdic = Perdict(filename,cache_mode=False)
 	local_pdic.fail_obj = "hello"
+	code.interact(local=dict(globals(),**locals()))
 	os.remove(filename)
 	
 	
