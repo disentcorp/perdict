@@ -1,5 +1,6 @@
 # perdict
 
+![Coverage Status](./coverage-badge.svg?dummy=8484744)
 Super simple Persistent dictionary. Key-value pairs are stored on disk in a file. Also supports "dot-notation".
 
 If no filename is specified stored ~/.perdict/globals.cpkl. Serialization is courtesy of `cloudpickle`.
