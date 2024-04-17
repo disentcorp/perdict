@@ -30,7 +30,6 @@ setup(
     packages=[
         "perdict",
     ],
-    
     include_package_data=True,
     package_data={"perdict": ["tests/*"]},
     license_files=("LICENSE",),

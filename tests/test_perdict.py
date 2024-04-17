@@ -1,6 +1,6 @@
-import code
 import os
 import pathlib
+import shutil
 import tempfile
 import unittest
 import uuid
@@ -26,10 +26,8 @@ class Test_Perdict(unittest.TestCase):
         )
         cls.pdic = Perdict(cls.filename)
         # save the file
-        try:
-            os.rmdir(FOLDER)
-        except:
-            pass
+        if FOLDER.exists():
+            shutil.rmtree(FOLDER)
         cls.pdic_default = Perdict()
         cls.pdic.save()
 
@@ -299,6 +297,19 @@ class Test_Perdict(unittest.TestCase):
         del local_pdic.x
         with self.assertRaises(AttributeError):
             local_pdic.x
+
+    def test_getattr(self):
+        """
+        test getattr, eg oxj.x = 10; obj.x --> 10
+        """
+
+        local_pdic = Perdict(self.filename, cache_mode=False)
+        local_pdic.x = 10
+        self.assertEqual(local_pdic.x, 10)
+        self.assertFalse(local_pdic.cache_mode)
+
+        local_pdic_new = Perdict(self.filename, cache_mode=False)
+        self.assertEqual(local_pdic_new.x, 10)
 
     def test_folder(self):
         """

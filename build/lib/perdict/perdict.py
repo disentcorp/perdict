@@ -211,5 +211,3 @@ class Perdict:
         """
 
         return str(self.dic)
-
-
