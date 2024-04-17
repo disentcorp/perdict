@@ -26,7 +26,7 @@ class Perdict:
             self.dic = self.load()
 
     def update(self):
-        if not hasattr(self, "dic"):
+        if not "dic" in self.__dict__:
             self.dic = self.load()
 
     def __getitem__(self, key):
@@ -64,8 +64,15 @@ class Perdict:
             del self.dic[key]
         except (AttributeError, KeyError):
             pass
+        try:
+            del self.__dict__[key]
+        except (AttributeError, KeyError):
+            pass
 
         self.save()
+    
+    def __delattr__(self,key):
+        self.__delitem__(key)
 
     def __iter__(self):
         """
@@ -148,10 +155,24 @@ class Perdict:
         self.update()
         self.dic[key] = value
         self.save()
+    
+    def __getattr__(self,key):
+        """
+            first try to get the value from the dict of disk, then from dir
+        """
+
+        self.update()
+        if key in self.dic:
+            return self.dic[key]
+        
+        elif key in self.__dict__:
+            return self.__dict__[key]
+        else:
+            raise AttributeError(f"Perdict object has no attribute of {key}")
 
     def __setattr__(self, key, value):
         """
-        if key not in LOCAL_ATTR, we save on disk
+            if key not in LOCAL_ATTR, we save on disk
         """
 
         if key not in LOCAL_ATRR:
@@ -211,5 +232,8 @@ class Perdict:
         """
 
         return str(self.dic)
+    
+    
+
 
 
