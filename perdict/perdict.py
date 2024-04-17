@@ -26,7 +26,12 @@ class Perdict:
             self.dic = self.load()
 
     def update(self):
-        if not "dic" in self.__dict__:
+        """
+        when cache_mode is false, dic attr was not created in init
+        however, we need to create dic attr in some functions, so update is called
+        from those functions
+        """
+        if not hasattr(self, "dic"):
             self.dic = self.load()
 
     def __getitem__(self, key):
@@ -70,8 +75,8 @@ class Perdict:
             pass
 
         self.save()
-    
-    def __delattr__(self,key):
+
+    def __delattr__(self, key):
         self.__delitem__(key)
 
     def __iter__(self):
@@ -155,24 +160,24 @@ class Perdict:
         self.update()
         self.dic[key] = value
         self.save()
-    
-    def __getattr__(self,key):
+
+    def __getattr__(self, key):
         """
-            first try to get the value from the dict of disk, then from dir
+        first try to get the value from the dict of disk, then from dir
         """
 
-        self.update()
+        if not self.cache_mode:
+            # to avoid max recursion. Cache_mode=False means that dic was not generated
+            # in init
+            self.dic = self.load()
         if key in self.dic:
             return self.dic[key]
-        
-        elif key in self.__dict__:
-            return self.__dict__[key]
         else:
             raise AttributeError(f"Perdict object has no attribute of {key}")
 
     def __setattr__(self, key, value):
         """
-            if key not in LOCAL_ATTR, we save on disk
+        if key not in LOCAL_ATTR, we save on disk
         """
 
         if key not in LOCAL_ATRR:
@@ -232,8 +237,3 @@ class Perdict:
         """
 
         return str(self.dic)
-    
-    
-
-
-
